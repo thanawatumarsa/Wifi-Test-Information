@@ -1,13 +1,15 @@
 <template>
-  <div id="app">
-    <router-link to="/login">Login</router-link>
-    <router-link to="/register">Register</router-link>
-    <router-view :newRegister = "newRegister" :register = "register" :dataLogin="dataLogin" :signin="signin"></router-view>
+  <div id="app" class="">
+    <Navbar :test="test" :signout="signout"></Navbar>
+    <div class="container">
+      <router-view :changePage="changePage" :newRegister = "newRegister" :register = "register" :dataLogin="dataLogin" :signin="signin"></router-view>
+    </div>
   </div>
 </template>
 
 <script>
 import Firebase from 'firebase'
+import Navbar from '@/components/navbar'
 
 let config = {
   apiKey: 'AIzaSyCq9XSREG-KQz4IZgmmbcSpRYgz4HK-KpQ',
@@ -32,7 +34,6 @@ export default {
       newRegister: {
         fname: '',
         lname: '',
-        uname: '',
         pass: '',
         conpass: '',
         email: ''
@@ -40,8 +41,12 @@ export default {
       dataLogin: {
         email: '',
         pass: ''
-      }
+      },
+      tempLog: 0
     }
+  },
+  components: {
+    Navbar
   },
   methods: {
     register: function () {
@@ -49,7 +54,6 @@ export default {
       this.authFirebase(this.newRegister.email, this.newRegister.pass)
       this.newRegister.fname = ''
       this.newRegister.lname = ''
-      this.newRegister.uname = ''
       this.newRegister.pass = ''
       this.newRegister.conpass = ''
       this.newRegister.email = ''
@@ -71,7 +75,9 @@ export default {
           Firebase.auth().currentUser.sendEmailVerification()
           alert('Email Verification Sent! Please check yor email address.')
           alert('Register Success!')
+          this.tempLog = 1
           console.log(Firebase.auth().currentUser)
+          console.log(this.tempLog)
           // window.location = './components/login.vue'
           return true
         }
@@ -88,18 +94,46 @@ export default {
         }
         console.log(error)
       }).then(function (checkVerify) {
-        Firebase.auth().onAuthStateChanged(firebaseUser => {
+        var unsubscribe = Firebase.auth().onAuthStateChanged(firebaseUser => {
           if (firebaseUser.emailVerified) {
             console.log('email is verify')
+            console.log(firebaseUser.uid)
           } else {
             console.log('Email is not verified')
             alert('Please verify your email address then login again')
           }
         })
+        unsubscribe()
       })
+    },
+    signout: function () {
+      Firebase.auth().signOut().then(function () {
+        localStorage.clear()
+        console.log('Signed Out')
+      }, function (error) {
+        console.error('Sign Out Error', error)
+      })
+    },
+    test: function () {
+      var user = Firebase.auth().currentUser
+      var email, uid, emailVerified
+      if (user != null) {
+        email = user.email
+        emailVerified = user.emailVerified
+        uid = user.uid
+      }
+      console.log(email)
+      console.log(emailVerified)
+      console.log(uid)
+    },
+    changePage: function (page) {
+      var vm = this
+      vm.$router.push(page)
     }
   },
-  components: {
+  mounted () {
+    var vm = this
+    vm.$router.push('/login')
   }
 }
 </script>
@@ -112,5 +146,36 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+#loginCard {
+  width: 40px;
+  background-color: red;
+}
+.loginPosition {
+  margin-top: 10%
+}
+.left {
+  margin-top: 3%;
+  float: left;
+  font-size: 80%;
+}
+.cardLog {
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    transition: 0.3s;
+}
+.cardLog:hover {
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+}
+.cardReg {
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    transition: 0.3s;
+    padding-bottom: 4%;
+}
+.cardReg:hover {
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+}
+.cardContainer {
+    padding: 2px 16px;
+    padding-bottom: 5%;
 }
 </style>
