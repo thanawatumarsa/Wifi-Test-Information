@@ -2,7 +2,7 @@
   <div id="app" class="">
     <Navbar :test="test" :signout="signout"></Navbar>
     <div class="container">
-      <router-view :changePage="changePage" :newRegister = "newRegister" :register = "register" :dataLogin="dataLogin" :signin="signin"></router-view>
+      <router-view :wifiInfo="wifiInfo" :addProject="addProject" :newProject="newProject" :changePage="changePage" :newRegister = "newRegister" :register = "register" :dataLogin="dataLogin" :signin="signin"></router-view>
     </div>
   </div>
 </template>
@@ -11,17 +11,17 @@
 import Firebase from 'firebase'
 import Navbar from '@/components/navbar'
 
-let config = {
+var config = {
   apiKey: 'AIzaSyCq9XSREG-KQz4IZgmmbcSpRYgz4HK-KpQ',
   authDomain: 'wifi-storage.firebaseapp.com',
   databaseURL: 'https://wifi-storage.firebaseio.com',
   storageBucket: 'wifi-storage.appspot.com',
   messagingSenderId: '1062691344683'
 }
-let app = Firebase.initializeApp(config)
-let db = app.database()
-let wifiInfoRef = db.ref('wifiInfo')
-let userRef = db.ref('users')
+var app = Firebase.initializeApp(config)
+var db = app.database()
+var wifiInfoRef = db.ref('wifiInfo')
+var userRef = db.ref('users')
 
 export default {
   name: 'app',
@@ -42,6 +42,9 @@ export default {
         email: '',
         pass: ''
       },
+      newProject: {
+        projectName: ''
+      },
       tempLog: 0
     }
   },
@@ -59,6 +62,7 @@ export default {
       this.newRegister.email = ''
     },
     authFirebase: function (email, pass) {
+      var router = this.$router
       Firebase.auth().createUserWithEmailAndPassword(email, pass).catch(function (error) {
         var errorCode = error.code
         var errorMessage = error.message
@@ -75,15 +79,14 @@ export default {
           Firebase.auth().currentUser.sendEmailVerification()
           alert('Email Verification Sent! Please check yor email address.')
           alert('Register Success!')
-          this.tempLog = 1
           console.log(Firebase.auth().currentUser)
-          console.log(this.tempLog)
-          // window.location = './components/login.vue'
+          router.push('/login')
           return true
         }
       })
     },
     signin: function () {
+      var router = this.$router
       Firebase.auth().signInWithEmailAndPassword(this.dataLogin.email, this.dataLogin.pass).catch(function (error) {
         var errorCode = error.code
         var errorMessage = error.message
@@ -96,8 +99,10 @@ export default {
       }).then(function (checkVerify) {
         var unsubscribe = Firebase.auth().onAuthStateChanged(firebaseUser => {
           if (firebaseUser.emailVerified) {
+            alert('Welcome')
             console.log('email is verify')
             console.log(firebaseUser.uid)
+            router.push('/dashboard')
           } else {
             console.log('Email is not verified')
             alert('Please verify your email address then login again')
@@ -125,6 +130,11 @@ export default {
       console.log(email)
       console.log(emailVerified)
       console.log(uid)
+      console.log(wifiInfoRef)
+    },
+    addProject: function () {
+      wifiInfoRef.push(this.newProject)
+      this.newProject.projectName = ''
     },
     changePage: function (page) {
       var vm = this
